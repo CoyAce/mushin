@@ -39,6 +39,7 @@ func Draw(window *app.Window, c *wi.Client) error {
 		switch e := evt.(type) {
 		// this is sent when the application is closed
 		case app.DestroyEvent:
+			wi.DefaultClient.Store()
 			return e.Err
 		case app.ConfigEvent:
 			if e.Config.Focused == false {
@@ -48,6 +49,8 @@ func Draw(window *app.Window, c *wi.Client) error {
 			if runtime.GOOS == "android" || runtime.GOOS == "ios" {
 				if e.Config.Focused == false {
 					wi.DefaultClient.SignOut()
+				} else {
+					go wi.DefaultClient.SignIn()
 				}
 			}
 		// this is sent when the application should re-render.
