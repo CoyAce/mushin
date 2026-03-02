@@ -436,7 +436,7 @@ func GetPath(uuid string, filename string) string {
 }
 
 func GetDataPath(filename string) string {
-	return GetPath(wi.DefaultClient.FullID(), filename)
+	return GetPath(wi.DefaultClient.ID(), filename)
 }
 
 func GetConfig(filename string) string {

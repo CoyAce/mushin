@@ -65,7 +65,7 @@ func (v *Avatar) Layout(gtx layout.Context) layout.Dimensions {
 				v.Gif = LoadGif(gifPath, false)
 				v.GIF = gifImg
 				v.AvatarType = GIF_IMG
-				avatar := AvatarCache.LoadOrElseNew(wi.DefaultClient.FullID())
+				avatar := AvatarCache.LoadOrElseNew(wi.DefaultClient.ID())
 				avatar.Gif = v.Gif
 				avatar.AvatarType = GIF_IMG
 				SaveGif(gifImg, "icon.gif", true)
@@ -81,7 +81,7 @@ func (v *Avatar) Layout(gtx layout.Context) layout.Dimensions {
 				}
 				v.Image = &img
 				v.AvatarType = IMG
-				avatar := AvatarCache.LoadOrElseNew(wi.DefaultClient.FullID())
+				avatar := AvatarCache.LoadOrElseNew(wi.DefaultClient.ID())
 				avatar.Image = &img
 				avatar.AvatarType = IMG
 				SaveImg(img, "icon.png", true)

@@ -14,19 +14,17 @@ var OnSettingsSubmit = func() {
 	modal.DefaultModal.Dismiss(nil)
 }
 var SyncIcon = func() {
-	path := GetPath(wi.DefaultClient.FullID(), "icon.png")
-	i, err := os.Stat(path)
-	if err != nil {
-		log.Printf("%v stat failed, %v", path, err)
-		path = GetPath(wi.DefaultClient.FullID(), "icon.gif")
-		i, err = os.Stat(path)
-		if err != nil {
-			log.Printf("%v stat failed, %v", path, err)
-			return
-		}
+	paths := []string{
+		GetPath(wi.DefaultClient.ID(), "icon.png"), GetPath(wi.DefaultClient.ID(), "icon.gif"),
 	}
-	err = wi.DefaultClient.SendFile(Content(path), wi.OpSyncIcon, wi.Hash(unsafe.Pointer(&i)), filepath.Base(path), uint64(i.Size()), 0)
-	if err != nil {
-		log.Printf("SyncIcon failed, %v", err)
+	for _, path := range paths {
+		i, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+		err = wi.DefaultClient.SendFile(Content(path), wi.OpSyncIcon, wi.Hash(unsafe.Pointer(&i)), filepath.Base(path), uint64(i.Size()), 0)
+		if err != nil {
+			log.Printf("SyncIcon failed, %v", err)
+		}
 	}
 }

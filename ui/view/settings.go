@@ -2,10 +2,12 @@ package view
 
 import (
 	"image"
+	"io"
 	"log"
 	"mushin/assets/fonts"
 	"mushin/assets/icons"
 	"os"
+	"path/filepath"
 	"time"
 
 	modal "mushin/ui/layout"
@@ -36,7 +38,7 @@ type SettingsForm struct {
 func NewSettingsForm(onSuccess func()) *SettingsForm {
 	s := &SettingsForm{
 		Theme:            fonts.NewTheme(),
-		avatar:           Avatar{UUID: wi.DefaultClient.FullID(), Size: 64, Editable: true, Theme: fonts.DefaultTheme, OnChange: SyncIcon},
+		avatar:           Avatar{UUID: wi.DefaultClient.ID(), Size: 64, Editable: true, Theme: fonts.DefaultTheme, OnChange: SyncIcon},
 		onSuccess:        onSuccess,
 		nicknameEditor:   &component.TextField{Editor: widget.Editor{}},
 		signEditor:       &component.TextField{Editor: widget.Editor{}},
@@ -45,23 +47,24 @@ func NewSettingsForm(onSuccess func()) *SettingsForm {
 	}
 	s.Theme.TextSize = 0.75 * s.Theme.TextSize
 	s.submitButton.OnClick = func() {
-		oldUUID := wi.DefaultClient.FullID()
-		nicknameChanged := s.nicknameEditor.Text() != wi.DefaultClient.Nickname
-		if nicknameChanged {
-			wi.DefaultClient.SetNickName(s.nicknameEditor.Text())
-			newUUID := wi.DefaultClient.FullID()
-			renameOldPathToNewPath(oldUUID, newUUID)
-			// update cache
-			copyOldCacheEntryToNewCache(oldUUID, newUUID)
-		}
 		wi.DefaultClient.SetSign(s.signEditor.Text())
 		wi.DefaultClient.SetServerAddr(s.serverAddrEditor.Text())
-		// SendSign first, bind uuid to sign
-		wi.DefaultClient.SendSign()
-		if nicknameChanged && s.avatar.AvatarType != Default {
-			// then sync icon
-			SyncIcon()
+		nicknameChanged := s.nicknameEditor.Text() != wi.DefaultClient.Nickname
+		oldUUID := wi.DefaultClient.ID()
+		if nicknameChanged {
+			wi.DefaultClient.SetNickName(s.nicknameEditor.Text())
+			newUUID := wi.DefaultClient.ID()
+			renamePath(oldUUID, newUUID)
+			// update cache
+			copyCacheEntry(oldUUID, newUUID)
 		}
+		go func() {
+			// confirmed sign in
+			wi.DefaultClient.SignIn()
+			if nicknameChanged {
+				wi.DefaultClient.SyncName(oldUUID)
+			}
+		}()
 		wi.DefaultClient.Store()
 		s.onSuccess()
 	}
@@ -74,17 +77,54 @@ func NewSettingsForm(onSuccess func()) *SettingsForm {
 	return s
 }
 
-func copyOldCacheEntryToNewCache(oldUUID string, newUUID string) {
+func copyCacheEntry(oldUUID string, newUUID string) {
 	avatar := AvatarCache.LoadOrElseNew(oldUUID)
 	AvatarCache.Add(newUUID, avatar)
 }
 
-func renameOldPathToNewPath(oldUUID string, newUUID string) {
+func renamePath(oldUUID string, newUUID string) {
 	oldPath := GetDir(oldUUID)
 	newPath := GetDir(newUUID)
 	err := os.Rename(oldPath, newPath)
 	if err != nil {
 		log.Printf("Failed to rename: %v", err)
+	}
+}
+
+func copyThenReloadIcon(oldUUID string, newUUID string) {
+	paths := []string{
+		GetPath(oldUUID, "icon.png"), GetPath(oldUUID, "icon.gif"),
+	}
+	for _, path := range paths {
+		_, err := os.Stat(path)
+		if err != nil {
+			continue
+		}
+		r, err := Open(path)
+		if err != nil {
+			log.Printf("Open file %s failed: %s", path, err)
+			continue
+		}
+		target := GetPath(newUUID, filepath.Base(path))
+		wi.Mkdir(filepath.Dir(target))
+		w, err := os.Create(target)
+		if err != nil {
+			log.Printf("Create file %s failed: %s", target, err)
+			_ = r.Close()
+			continue
+		}
+		_, err = io.Copy(w, r)
+		if err != nil {
+			log.Printf("Save file %s failed: %s", path, err)
+		}
+		_ = r.Close()
+		_ = w.Close()
+		avatar := AvatarCache.LoadOrElseNew(newUUID)
+		if filepath.Ext(path) == ".gif" {
+			avatar.Reload(GIF_IMG)
+		} else {
+			avatar.Reload(IMG)
+		}
 	}
 }
 

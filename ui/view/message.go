@@ -220,11 +220,11 @@ type Contacts struct {
 }
 
 func FromSender(sender string) Contacts {
-	return Contacts{UUID: wi.DefaultClient.FullID(), Sender: sender}
+	return Contacts{UUID: wi.DefaultClient.ID(), Sender: sender}
 }
 
 func FromMyself() Contacts {
-	return FromSender(wi.DefaultClient.FullID())
+	return FromSender(wi.DefaultClient.ID())
 }
 
 type TextControl struct {

@@ -101,10 +101,9 @@ func (m *MessageManager) Process(window *app.Window, c *wi.Client) {
 				}
 				message = msg
 			case msg := <-c.SignedMessages:
-				text := string(msg.Payload)
 				message = &Message{
 					State:       Sent,
-					TextControl: NewTextControl(text),
+					TextControl: NewTextControl(string(msg.Payload)),
 					MessageStyle: MessageStyle{
 						Theme: fonts.DefaultTheme,
 					},
@@ -114,6 +113,11 @@ func (m *MessageManager) Process(window *app.Window, c *wi.Client) {
 				}
 			case msg := <-c.SubMessages:
 				m.publishContent(msg)
+				continue
+			case msg := <-c.CtrlMessages:
+				if msg.Code == wi.OpSyncName {
+					go copyThenReloadIcon(msg.Target, msg.UUID)
+				}
 				continue
 			case msg := <-c.FileMessages:
 				message = &Message{
