@@ -10,6 +10,7 @@ import (
 	"mushin/internal/audio"
 	"os"
 	"path/filepath"
+	"slices"
 	"sync"
 	"time"
 
@@ -86,7 +87,7 @@ func (m *MessageManager) Process(window *app.Window, c *wi.Client) {
 					},
 					Contacts:    FromSender(msg.Sign.UUID),
 					MessageType: Text,
-					CreatedAt:   time.Now(),
+					CreatedAt:   time.UnixMilli(msg.CreatedAt),
 				}
 			case msg := <-c.SubMessages:
 				m.publishContent(msg)
@@ -104,7 +105,7 @@ func (m *MessageManager) Process(window *app.Window, c *wi.Client) {
 					},
 					Contacts:    FromSender(msg.UUID),
 					FileControl: FileControl{Filename: msg.Filename},
-					CreatedAt:   time.Now()}
+					CreatedAt:   time.UnixMilli(msg.CreatedAt)}
 				switch msg.Code {
 				case wi.OpSendImage:
 					message.MessageType = Image
@@ -434,6 +435,16 @@ func (k *MessageKeeper) Messages(streamConfig audio.StreamConfig) []*Message {
 		}
 		ret = append(ret, &msg)
 	}
+	slices.SortFunc(ret, func(i, j *Message) int {
+		switch {
+		case i.CreatedAt.Before(j.CreatedAt):
+			return -1
+		case i.CreatedAt.After(j.CreatedAt):
+			return 1
+		default:
+			return 0
+		}
+	})
 	return ret
 }
 

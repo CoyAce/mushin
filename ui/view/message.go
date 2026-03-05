@@ -16,6 +16,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -635,7 +636,17 @@ func (m *Message) isMe() bool {
 }
 
 func (m *Message) AddTo(list *MessageList) {
-	list.Messages = append(list.Messages, m)
+	n := len(list.Messages)
+	i := sort.Search(n, func(i int) bool {
+		return !list.Messages[i].CreatedAt.Before(m.CreatedAt)
+	})
+	if i == n {
+		list.Messages = append(list.Messages, m)
+	} else {
+		list.Messages = append(list.Messages, new(Message)) // 扩容
+		copy(list.Messages[i+1:], list.Messages[i:])        // 移动元素
+		list.Messages[i] = m                                // 插入新消息
+	}
 }
 
 func (m *Message) SendTo(messageAppender *MessageKeeper) {
