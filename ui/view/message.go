@@ -200,6 +200,8 @@ type Message struct {
 	MessageType
 	Contacts
 	CreatedAt time.Time
+	Sign      string // sign code
+	Block     uint32 // block number
 }
 
 type MessageStyle struct {

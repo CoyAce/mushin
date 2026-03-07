@@ -89,6 +89,8 @@ func (m *MessageManager) Process(window *app.Window, c *wi.Client) {
 					Contacts:    FromSender(msg.UUID),
 					MessageType: Text,
 					CreatedAt:   time.UnixMilli(msg.CreatedAt),
+					Sign:        wi.DefaultClient.Sign,
+					Block:       msg.Block,
 				}
 			case msg := <-c.SubMessages:
 				m.publishContent(msg)
@@ -106,7 +108,10 @@ func (m *MessageManager) Process(window *app.Window, c *wi.Client) {
 					},
 					Contacts:    FromSender(msg.UUID),
 					FileControl: FileControl{Filename: msg.Filename},
-					CreatedAt:   time.UnixMilli(msg.CreatedAt)}
+					CreatedAt:   time.UnixMilli(msg.CreatedAt),
+					Sign:        wi.DefaultClient.Sign,
+					Block:       msg.Block,
+				}
 				switch msg.Code {
 				case wi.OpSendImage:
 					message.MessageType = Image
@@ -436,6 +441,9 @@ func (k *MessageKeeper) Messages(streamConfig audio.StreamConfig) []*Message {
 		}
 		if k.DownloadedFiles[msg.FileId] != nil {
 			msg.progress = 100
+		}
+		if !msg.isMe() {
+			wi.DefaultClient.Track(&wi.SignBody{Sign: msg.Sign, UUID: msg.Sender}, msg.Block)
 		}
 		ret = append(ret, &msg)
 	}
