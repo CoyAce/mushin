@@ -51,7 +51,10 @@ func Draw(window *app.Window, c *wi.Client) error {
 					wi.DefaultClient.SignOut()
 				}
 			} else {
-				go wi.DefaultClient.SignIn()
+				go func() {
+					wi.DefaultClient.SignIn()
+					wi.DefaultClient.Pull()
+				}()
 			}
 
 		// this is sent when the application should re-render.

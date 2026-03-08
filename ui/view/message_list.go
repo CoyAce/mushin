@@ -53,6 +53,7 @@ func (v *VoiceMode) SwitchBetweenTextAndVoice(voiceMessage *IconButton) func() {
 }
 
 func (m *MessageManager) Process(window *app.Window, c *wi.Client) {
+	go wi.DefaultClient.Pull()
 	go ConsumeAudioData(m.StreamConfig)
 	go m.MessageKeeper.Loop()
 	go func() {
