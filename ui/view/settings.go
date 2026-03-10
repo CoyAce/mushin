@@ -61,6 +61,7 @@ func NewSettingsForm(onSuccess func()) *SettingsForm {
 		go func() {
 			// confirmed sign in
 			wi.DefaultClient.SignIn()
+			wi.DefaultClient.Pull()
 			if nicknameChanged {
 				wi.DefaultClient.SyncName(oldUUID)
 			}
