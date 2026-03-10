@@ -43,14 +43,14 @@ func Draw(window *app.Window, c *wi.Client) error {
 			return e.Err
 		case app.ConfigEvent:
 			if e.Config.Focused == false {
+				log.Printf("focus lost")
 				wi.DefaultClient.Store()
 				m.MessageKeeper.Flush()
-			}
-			if e.Config.Focused == false {
 				if runtime.GOOS == "android" || runtime.GOOS == "ios" {
 					wi.DefaultClient.SignOut()
 				}
 			} else {
+				log.Printf("focused")
 				go func() {
 					wi.DefaultClient.SignIn()
 					wi.DefaultClient.Pull()

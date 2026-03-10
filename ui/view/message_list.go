@@ -232,8 +232,7 @@ func NewMessageManager(streamConfig audio.StreamConfig) MessageManager {
 		List:  layout.List{Axis: layout.Vertical, ScrollToEnd: true},
 		Theme: fonts.DefaultTheme,
 	}
-	messages := messageKeeper.Messages(streamConfig)
-	messageList.Messages.Store(&messages)
+	messageList.Messages.Store(new(messageKeeper.Messages(streamConfig)))
 	inputField := component.TextField{Editor: widget.Editor{Submit: true}}
 	messageEditor := &MessageEditor{InputField: &inputField, Theme: fonts.DefaultTheme}
 	return MessageManager{
